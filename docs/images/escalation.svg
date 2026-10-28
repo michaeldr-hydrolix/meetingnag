@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 240" width="960" height="240" role="img" aria-label="Escalation timeline: stays awake at T minus 9 minutes, takes the screen at T minus 1 minute, pings and speaks every 4 seconds, alerts your phone after 60 seconds">
+  <rect x="0" y="0" width="960" height="240" rx="12" fill="#f3f4f7"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif">
+    <line x1="48" y1="62" x2="912" y2="62" stroke="#141826" stroke-width="2"/>
+    <g fill="#a3121b">
+      <circle cx="48" cy="62" r="7"/><circle cx="278" cy="62" r="7"/>
+      <circle cx="508" cy="62" r="7"/><circle cx="738" cy="62" r="7"/>
+    </g>
+    <g font-family="Menlo, 'SF Mono', Consolas, monospace" font-size="14" font-weight="600" fill="#a3121b">
+      <text x="40" y="40">T − 9 min</text>
+      <text x="270" y="40">T − 1 min</text>
+      <text x="500" y="40">Every 4 s</text>
+      <text x="730" y="40">+60 s</text>
+    </g>
+    <g font-size="19" font-weight="700" fill="#141826">
+      <text x="40" y="104">Stays awake</text>
+      <text x="270" y="104">Takes the screen</text>
+      <text x="500" y="104">Pings and speaks</text>
+      <text x="730" y="104">Alerts your phone</text>
+    </g>
+    <g font-size="14.5" fill="#5a6072">
+      <text x="40" y="134">Lid-closed mode keeps the</text>
+      <text x="40" y="156">Mac awake with the lid shut</text>
+      <text x="40" y="178">and wakes it if it's asleep.</text>
+      <text x="40" y="208" font-size="12.5" fill="#8a90a0">Optional</text>
+
+      <text x="270" y="134">Red full-screen alert with a</text>
+      <text x="270" y="156">live countdown and a</text>
+      <text x="270" y="178">one-click Join button.</text>
+
+      <text x="500" y="134">Sonar ping, then “Meeting in</text>
+      <text x="500" y="156">less than a minute” out loud.</text>
+      <text x="500" y="178">Volume forced to 100%.</text>
+
+      <text x="730" y="134">Pushover emergency alert</text>
+      <text x="730" y="156">or a Twilio call if you're</text>
+      <text x="730" y="178">away from your desk.</text>
+      <text x="730" y="208" font-size="12.5" fill="#8a90a0">Optional</text>
+    </g>
+  </g>
+</svg>

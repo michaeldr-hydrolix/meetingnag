@@ -1,16 +1,51 @@
 # MeetingNag
 
-A free menu-bar app (⏰) that takes over your Mac's screen 1 minute before each meeting, sounds a sonar ping and says "Meeting in N minutes" out loud until you click **I'm on it**, **Join meeting**, or **Snooze 1 min**, and logs when you confirmed. If you don't respond, it can also alert your phone.
+**The meeting reminder you can't ignore.**
+
+Calendar pop-ups are easy to miss when you're heads-down. MeetingNag takes over your whole screen 1 minute before every meeting and keeps pinging until you click to confirm you've seen it. It's free and runs on your Mac.
+
+![MeetingNag's full-screen alert: a red screen with "Starts in 0:48", the meeting title, and Join meeting, I'm on it and Snooze 1 min buttons](docs/images/alert.svg)
+
+<sub>It covers every screen and Space, even over full-screen apps. The meeting shown is an example.</sub>
+
+## It escalates until you answer
+
+Each step only happens if you haven't clicked yet.
+
+![Timeline: T − 9 min stays awake, T − 1 min takes the screen, every 4 s pings and speaks, +60 s alerts your phone](docs/images/escalation.svg)
+
+## What you get
+
+| | |
+|---|---|
+| <img src="docs/images/menu.svg" width="360" alt="The ⏰ menu-bar menu"> | **Runs in the menu bar.** Reads Google Calendar through the macOS Calendar app. It skips solo blocks, declined invites and anything titled Focus or OOO. |
+| <img src="docs/images/phone.svg" width="240" alt="Pushover alert on a phone that shows only the meeting time"> | **Private by design.** It never speaks or sends the meeting title. The voice and phone alerts only say that a meeting is coming up. |
+
+**Logs every confirmation.** Each alert, whether you joined, snoozed or needed your phone, and how many seconds it took:
+
+| meeting_start | action | seconds_after_alert |
+|---|---|---|
+| 09:00 | alert_shown | 0 |
+| 09:00 | joined | 7 |
+| 11:30 | alert_shown | 0 |
+| 11:30 | escalated_to_phone | 60 |
+| 11:30 | acknowledged_after_escalation | 94 |
+
+## The 30-second version
+
+> I kept missing meetings because calendar pop-ups are easy to tune out. MeetingNag takes over my Mac's screen a minute before every meeting. It pings and counts down out loud at full volume until I click to confirm. If I'm away from my desk, it alerts my phone. It's free, it keeps meeting names private, and it logs every confirmation.
+
+Free · source included · macOS 13+ · Google Calendar via macOS Calendar · about 5 minutes to set up. A one-page version of this pitch is in [`docs/pitch.html`](docs/pitch.html).
 
 ## Setup (about 5 minutes)
 
 1. **Connect Google Calendar to macOS.** Go to System Settings › Internet Accounts › Add Account › Google and sign in with your work account. Make sure **Calendars** is turned on.
    To pick up last-minute changes faster, open the Calendar app and go to Settings › Accounts › your Google account. Set **Refresh Calendars** to the shortest interval it offers.
-2. **Build the installer (once).** Unzip the folder, open Terminal, and run:
+2. **Build the installer (once).** Clone or download this repo, open Terminal in its folder, and run:
    ```
-   bash ~/Downloads/MeetingNag/build-pkg.sh
+   bash build-pkg.sh
    ```
-   Adjust the path if you unzipped the folder somewhere else. If macOS asks you to install the Command Line Tools, click **Install**, then run the command again. This creates **MeetingNag-1.4.pkg** in the same folder. It works on both Apple silicon and Intel Macs.
+   If macOS asks you to install the Command Line Tools, click **Install**, then run the command again. This creates **MeetingNag-1.4.pkg** in the same folder. It works on both Apple silicon and Intel Macs.
 3. **Install.** Double-click the .pkg. On the **Installation Type** screen you can tick **Lid-closed mode** (it's off by default). The installer replaces any previous MeetingNag, including the older Terminal install, and keeps your settings.
 4. **Allow calendar access and Accessibility** when macOS asks, then click **⏰ › Test alert now**.
 

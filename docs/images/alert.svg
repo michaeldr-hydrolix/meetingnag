@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" role="img" aria-label="MeetingNag full-screen alert on a MacBook: red screen with a countdown, meeting title and three buttons">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d4d7df"/>
+      <stop offset="1" stop-color="#8a90a0"/>
+    </linearGradient>
+    <clipPath id="screen"><rect x="76" y="36" width="808" height="498" rx="4"/></clipPath>
+  </defs>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" text-anchor="middle">
+    <rect x="60" y="20" width="840" height="530" rx="18" fill="#1b1e27"/>
+    <rect x="76" y="36" width="808" height="498" rx="4" fill="#a3121b"/>
+    <g clip-path="url(#screen)" fill="none" stroke="#b8434a" stroke-width="2">
+      <circle cx="480" cy="300" r="90"/>
+      <circle cx="480" cy="300" r="190"/>
+      <circle cx="480" cy="300" r="228"/>
+    </g>
+    <text x="480" y="215" font-size="26" font-weight="500" fill="#f6e3e4">Starts in 0:48</text>
+    <text x="480" y="282" font-size="54" font-weight="700" fill="#ffffff">Q4 pipeline review</text>
+    <text x="480" y="322" font-size="18" fill="#e6babd">10:00 – 10:30 AM  ·  Work calendar</text>
+    <rect x="229" y="360" width="170" height="46" rx="8" fill="#ffffff"/>
+    <text x="314" y="390" font-size="18" font-weight="600" fill="#141826">Join meeting</text>
+    <rect x="415" y="360" width="140" height="46" rx="8" fill="#ffffff"/>
+    <text x="485" y="390" font-size="18" font-weight="600" fill="#141826">I'm on it</text>
+    <rect x="571" y="360" width="160" height="46" rx="8" fill="#b53a41"/>
+    <text x="651" y="390" font-size="18" font-weight="600" fill="#ffffff">Snooze 1 min</text>
+    <text x="480" y="450" font-size="14" fill="#dba2a6">Click a button to confirm you've seen this. Your phone will be alerted in 60s.</text>
+    <rect x="20" y="550" width="920" height="22" rx="10" fill="url(#base)"/>
+    <rect x="420" y="550" width="120" height="8" rx="4" fill="#6b7080"/>
+  </g>
+</svg>
