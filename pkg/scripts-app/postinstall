@@ -1,0 +1,37 @@
+#!/bin/bash
+# Runs as root after the app is copied to /Applications.
+# Installs the login item for the logged-in user and starts the app.
+LABEL="io.local.meetingnag"
+APP="/Applications/MeetingNag.app"
+
+USER_NAME="$(stat -f%Su /dev/console)"
+if [[ -z "$USER_NAME" || "$USER_NAME" == "root" || "$USER_NAME" == "loginwindow" ]]; then
+  exit 0
+fi
+USER_UID="$(id -u "$USER_NAME")"
+USER_HOME="$(dscl . -read "/Users/$USER_NAME" NFSHomeDirectory | awk '{print $2}')"
+AGENT_DIR="$USER_HOME/Library/LaunchAgents"
+AGENT="$AGENT_DIR/$LABEL.plist"
+
+sudo -u "$USER_NAME" mkdir -p "$AGENT_DIR" "$USER_HOME/Library/Application Support/MeetingNag"
+
+cat > "$AGENT" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$LABEL</string>
+  <key>ProgramArguments</key>
+  <array><string>$APP/Contents/MacOS/MeetingNag</string></array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>ProcessType</key><string>Interactive</string>
+</dict>
+</plist>
+PLIST
+chown "$USER_NAME":staff "$AGENT"
+chmod 644 "$AGENT"
+
+launchctl bootout "gui/$USER_UID/$LABEL" 2>/dev/null || true
+launchctl bootstrap "gui/$USER_UID" "$AGENT" || true
+exit 0

@@ -1,0 +1,27 @@
+#!/bin/bash
+# Runs as root before MeetingNag is installed. Removes any previous version
+# (pkg install in /Applications or the older build-from-source copy in ~/Applications).
+LABEL="io.local.meetingnag"
+
+USER_NAME="$(stat -f%Su /dev/console)"
+if [[ -n "$USER_NAME" && "$USER_NAME" != "root" && "$USER_NAME" != "loginwindow" ]]; then
+  USER_UID="$(id -u "$USER_NAME")"
+  USER_HOME="$(dscl . -read "/Users/$USER_NAME" NFSHomeDirectory | awk '{print $2}')"
+
+  launchctl bootout "gui/$USER_UID/$LABEL" 2>/dev/null || true
+  rm -f "$USER_HOME/Library/LaunchAgents/$LABEL.plist"
+  rm -rf "$USER_HOME/Applications/MeetingNag.app"
+  rm -f "$USER_HOME/Library/Application Support/MeetingNag/.lidmode"
+  # New build = new signature, so clear stale permission entries to get clean prompts.
+  sudo -u "$USER_NAME" tccutil reset Calendar "$LABEL" >/dev/null 2>&1 || true
+fi
+
+pkill -x MeetingNag 2>/dev/null || true
+tccutil reset Accessibility "$LABEL" >/dev/null 2>&1 || true
+
+# Lid-closed mode is re-added only if it's ticked in this install.
+/usr/bin/pmset -a disablesleep 0 >/dev/null 2>&1 || true
+rm -f /etc/sudoers.d/meetingnag
+
+rm -rf /Applications/MeetingNag.app
+exit 0

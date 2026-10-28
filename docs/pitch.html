@@ -1,0 +1,205 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeetingNag</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow column that reads like a 30-second pitch; each claim sits beside a mock of the real UI. */
+:root {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --ink: #141826;
+  --muted: #5a6072;
+  --line: #d9dce5;
+  --alarm: #a3121b;
+  --ok: #1f7a4d;
+  --device: #1b1e27;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1218; --surface: #181c25; --ink: #eceef4; --muted: #a0a6b6; --line: #2b3040;
+    --alarm: #e0434c; --ok: #4cc28a; --device: #05070b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1218; --surface: #181c25; --ink: #eceef4; --muted: #a0a6b6; --line: #2b3040;
+  --alarm: #e0434c; --ok: #4cc28a; --device: #05070b; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 48px 72px;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 72px; }
+
+.hero { display: grid; gap: 28px; }
+.eyebrow { font: 500 .78rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--alarm); }
+h1 {
+  font: 900 clamp(2.8rem, 8vw, 5.6rem)/.92 var(--display);
+  text-transform: uppercase; letter-spacing: .01em; margin: 0; text-wrap: balance;
+}
+h1 em { font-style: normal; color: var(--alarm); }
+.lede { font-size: 1.2rem; max-width: 60ch; margin: 0; }
+.lede b { font-weight: 600; }
+
+.laptop { margin: 0; max-width: 100%; }
+.screen { background: var(--device); border-radius: 14px 14px 0 0; padding: 12px; aspect-ratio: 16 / 10; max-width: 100%; }
+.alert {
+  height: 100%; border-radius: 4px; background: #a3121b; color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(6px, 1.6vw, 16px); text-align: center; padding: 4%;
+  position: relative; overflow: hidden;
+}
+.alert::before, .alert::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1;
+  border: 2px solid rgba(255,255,255,.25); border-radius: 50%;
+  transform: translate(-50%, -50%) scale(.4); animation: ping 4s ease-out infinite;
+}
+.alert::after { animation-delay: 2s; }
+@keyframes ping { to { transform: translate(-50%, -50%) scale(4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .alert::before, .alert::after { animation: none; opacity: 0; } }
+.alert > * { position: relative; }
+.a-count { font: 500 clamp(.8rem, 2.4vw, 1.5rem)/1 var(--body); opacity: .9; font-variant-numeric: tabular-nums; }
+.a-title { font: 700 clamp(1.3rem, 5vw, 3.2rem)/1 var(--body); }
+.a-sub { font-size: clamp(.65rem, 1.5vw, .95rem); opacity: .75; }
+.a-btns { display: flex; gap: clamp(6px, 1.4vw, 14px); flex-wrap: wrap; justify-content: center; margin-top: 2%; }
+.a-btns span { background: #fff; color: #141826; border-radius: 6px; font: 600 clamp(.6rem, 1.5vw, .95rem)/1 var(--body); padding: .6em 1em; }
+.a-btns span.dim { background: rgba(255,255,255,.18); color: #fff; }
+.a-hint { font-size: clamp(.55rem, 1.2vw, .78rem); opacity: .65; }
+.base { height: 14px; background: linear-gradient(var(--line), var(--muted)); border-radius: 0 0 14px 14px; margin: 0 -3%; }
+.caption { font: 400 .82rem/1.4 var(--mono); color: var(--muted); margin-top: 14px; }
+
+h2 { font: 700 clamp(1.8rem, 4.5vw, 2.6rem)/1 var(--display); text-transform: uppercase; margin: 0 0 8px; letter-spacing: .01em; }
+.section-intro { color: var(--muted); margin: 0 0 28px; max-width: 60ch; }
+.ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 2px solid var(--ink); }
+.step { padding: 18px 18px 6px 0; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.step + .step { padding-left: 18px; border-left: 1px solid var(--line); }
+.t { font: 500 .85rem/1 var(--mono); color: var(--alarm); font-variant-numeric: tabular-nums; }
+.step h3, .proof h3 { font: 600 1.05rem/1.3 var(--body); margin: 0; }
+.step p, .proof p { margin: 0; color: var(--muted); font-size: .93rem; }
+@media (max-width: 760px) {
+  .ladder { grid-template-columns: 1fr; border-top: 0; border-left: 2px solid var(--ink); }
+  .step, .step + .step { padding: 0 0 22px 20px; border-left: 0; }
+}
+
+.proofs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+@media (max-width: 860px) { .proofs { grid-template-columns: 1fr; } }
+.proof { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.mock { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-height: 180px; display: grid; align-content: center; min-width: 0; }
+
+.menubar { display: flex; justify-content: flex-end; gap: 14px; font: 500 .8rem/1 var(--body); color: var(--muted); padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.menubar .me { color: var(--ink); }
+.menu { margin: 8px 0 0 auto; width: min(100%, 240px); border: 1px solid var(--line); border-radius: 8px; padding: 6px 0; font-size: .82rem; background: var(--bg); }
+.menu div { padding: 4px 12px; }
+.menu .dim { color: var(--muted); }
+.menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+
+.phone { width: 190px; max-width: 100%; margin: 0 auto; background: var(--device); border-radius: 26px; padding: 26px 10px 30px; }
+.notif { background: rgba(255,255,255,.94); color: #141826; border-radius: 14px; padding: 10px 12px; font-size: .74rem; line-height: 1.35; }
+.notif b { display: block; font-size: .78rem; }
+.notif .app { font: 500 .62rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #a3121b; margin-bottom: 5px; }
+
+.log { overflow-x: auto; }
+.log table { border-collapse: collapse; width: 100%; font: 400 .74rem/1.5 var(--mono); font-variant-numeric: tabular-nums; }
+.log th { text-align: left; color: var(--muted); font-weight: 500; border-bottom: 1px solid var(--line); padding: 0 8px 4px 0; white-space: nowrap; }
+.log td { padding: 4px 8px 0 0; white-space: nowrap; }
+.ack { color: var(--ok); }
+.esc { color: var(--alarm); }
+
+.script { background: var(--ink); color: var(--bg); border-radius: 12px; padding: clamp(24px, 5vw, 44px); display: grid; gap: 16px; }
+.script .eyebrow { color: var(--bg); opacity: .65; }
+.script blockquote { margin: 0; font: 500 clamp(1.1rem, 2.6vw, 1.45rem)/1.5 var(--body); max-width: 62ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 10px 26px; font: 400 .85rem/1.4 var(--mono); opacity: .8; }
+</style>
+
+<main class="wrap">
+
+  <section class="hero">
+    <div class="eyebrow">MeetingNag · for macOS</div>
+    <h1>The meeting reminder you <em>can't</em> ignore.</h1>
+    <p class="lede">Calendar pop-ups are easy to miss when you're heads-down. MeetingNag <b>takes over your whole screen 1 minute before every meeting</b> and keeps pinging until you click to confirm you've seen it. It's free and runs on your Mac.</p>
+
+    <figure class="laptop">
+      <div class="screen">
+        <div class="alert" role="img" aria-label="Full-screen red meeting alert with a countdown and three buttons">
+          <div class="a-count">Starts in 0:48</div>
+          <div class="a-title">Q4 pipeline review</div>
+          <div class="a-sub">10:00 – 10:30 AM · Work calendar</div>
+          <div class="a-btns"><span>Join meeting</span><span>I'm on it</span><span class="dim">Snooze 1 min</span></div>
+          <div class="a-hint">Click a button to confirm you've seen this. Your phone will be alerted in 60s.</div>
+        </div>
+      </div>
+      <div class="base"></div>
+      <figcaption class="caption">Covers every screen and Space, even over full-screen apps. Example meeting shown.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>It escalates until you answer</h2>
+    <p class="section-intro">Each step only happens if you haven't clicked yet.</p>
+    <div class="ladder">
+      <div class="step"><span class="t">T − 9 min</span><h3>Stays awake</h3><p>In lid-closed mode, the Mac stays awake with the lid shut and wakes itself if it's asleep.</p></div>
+      <div class="step"><span class="t">T − 1 min</span><h3>Takes the screen</h3><p>A red full-screen alert with a live countdown and a one-click Join button.</p></div>
+      <div class="step"><span class="t">Every 4 s</span><h3>Pings and speaks</h3><p>A sonar ping, then “Meeting in less than a minute” out loud. Volume is forced to 100% and the mute key is ignored.</p></div>
+      <div class="step"><span class="t">+60 s</span><h3>Alerts your phone</h3><p>Optional. A Pushover emergency alert or a Twilio phone call if you're away from your desk.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What you get</h2>
+    <p class="section-intro">The app lives in the menu bar and keeps a record of each confirmation.</p>
+    <div class="proofs">
+      <div class="proof">
+        <div class="mock" aria-hidden="true">
+          <div class="menubar"><span>Wi-Fi</span><span class="me">⏰</span><span>Tue 9:59</span></div>
+          <div class="menu">
+            <div class="dim">Next: Q4 pipeline review at 10:00</div><hr>
+            <div>Test alert now</div><div>Pause alerts for 1 hour</div><hr>
+            <div>Open acknowledgement log</div><div>Edit settings…</div>
+          </div>
+        </div>
+        <h3>Runs in the menu bar</h3>
+        <p>Reads Google Calendar through the macOS Calendar app. It skips solo blocks, declined invites and anything titled Focus or OOO.</p>
+      </div>
+      <div class="proof">
+        <div class="mock" aria-hidden="true">
+          <div class="phone"><div class="notif"><div class="app">Pushover · Emergency</div><b>Meeting at 10:00 AM</b>You have a meeting at 10:00 AM and haven't confirmed on your Mac.</div></div>
+        </div>
+        <h3>Private by design</h3>
+        <p>It never speaks or sends the meeting title. Voice and phone alerts only say that a meeting is coming up.</p>
+      </div>
+      <div class="proof">
+        <div class="mock log" aria-hidden="true">
+          <table>
+            <thead><tr><th>meeting_start</th><th>action</th><th>secs</th></tr></thead>
+            <tbody>
+              <tr><td>09:00</td><td>alert_shown</td><td>0</td></tr>
+              <tr><td>09:00</td><td class="ack">joined</td><td>7</td></tr>
+              <tr><td>11:30</td><td>alert_shown</td><td>0</td></tr>
+              <tr><td>11:30</td><td class="esc">escalated_to_phone</td><td>60</td></tr>
+              <tr><td>11:30</td><td class="ack">acknowledged_after_escalation</td><td>94</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Logs every confirmation</h3>
+        <p>A CSV of every alert, whether you joined, snoozed or needed your phone, and how many seconds it took.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="script">
+    <div class="eyebrow">The 30-second version</div>
+    <blockquote>“I kept missing meetings because calendar pop-ups are easy to tune out. MeetingNag takes over my Mac's screen a minute before every meeting. It pings and counts down out loud at full volume until I click to confirm. If I'm away from my desk, it alerts my phone. It's free, it keeps meeting names private, and it logs every confirmation.”</blockquote>
+    <div class="facts"><span>Free · source included</span><span>macOS 13+</span><span>Google Calendar via macOS Calendar</span><span>About 5 min setup</span></div>
+  </section>
+
+</main>

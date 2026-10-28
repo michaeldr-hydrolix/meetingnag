@@ -1,0 +1,19 @@
+#!/bin/bash
+# Runs as root only if "Lid-closed mode" was ticked in the installer.
+# Lets the logged-in user's MeetingNag run pmset sleep commands without a password.
+USER_NAME="$(stat -f%Su /dev/console)"
+if [[ -z "$USER_NAME" || "$USER_NAME" == "root" || "$USER_NAME" == "loginwindow" ]]; then
+  exit 0
+fi
+USER_HOME="$(dscl . -read "/Users/$USER_NAME" NFSHomeDirectory | awk '{print $2}')"
+SUPPORT="$USER_HOME/Library/Application Support/MeetingNag"
+
+TMP="$(mktemp)"
+echo "$USER_NAME ALL=(root) NOPASSWD: /usr/bin/pmset -a disablesleep 0, /usr/bin/pmset -a disablesleep 1, /usr/bin/pmset schedule wake *" > "$TMP"
+if /usr/sbin/visudo -cf "$TMP" >/dev/null; then
+  install -m 0440 -o root -g wheel "$TMP" /etc/sudoers.d/meetingnag
+  sudo -u "$USER_NAME" mkdir -p "$SUPPORT"
+  sudo -u "$USER_NAME" touch "$SUPPORT/.lidmode"
+fi
+rm -f "$TMP"
+exit 0
