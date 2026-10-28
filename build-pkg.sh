@@ -9,7 +9,7 @@
 #   bash build-pkg.sh
 set -euo pipefail
 
-VERSION="1.4"
+VERSION="1.5"
 APP_NAME="MeetingNag"
 LABEL="io.local.meetingnag"
 SRC="$(cd "$(dirname "$0")" && pwd)"

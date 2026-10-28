@@ -258,28 +258,79 @@ struct Meeting {
     let joinURL: URL?
 }
 
-/// Finds the video-call link. Checks the event's URL field first, then location, then notes,
-/// and within each field takes the first link that appears.
-func findJoinURL(_ e: EKEvent) -> URL? {
-    var fields: [String] = []
-    if let u = e.url { fields.append(u.absoluteString) }
-    if let l = e.location { fields.append(l) }
-    if let n = e.notes { fields.append(n) }
-    let patterns = [
-        #"https://meet\.google\.com/[a-z0-9-]+"#,
-        #"https://[\w.-]*zoom\.us/(j|my|w|s)/[^\s<>"']+"#,
-        #"https://teams\.microsoft\.com/l/meetup-join/[^\s<>"']+"#,
-        #"https://teams\.live\.com/meet/[^\s<>"']+"#,
-        #"https://[\w.-]*webex\.com/[^\s<>"']+"#,
-        #"https://[\w.-]*(whereby\.com|meet\.jit\.si|chime\.aws|gotomeeting\.com|bluejeans\.com|around\.co)/[^\s<>"']+"#,
-    ]
-    for text in fields {
-        let hits = patterns.compactMap { text.range(of: $0, options: [.regularExpression, .caseInsensitive]) }
-        if let first = hits.min(by: { $0.lowerBound < $1.lowerBound }) {
-            return URL(string: String(text[first]))
+let meetingLinkPatterns = [
+    #"https://meet\.google\.com/[a-z]{3}-[a-z]{4}-[a-z]{3}"#,
+    #"https://meet\.google\.com/lookup/[a-z0-9]+"#,
+    #"https://[\w.-]*zoom\.us/(j|my|w|s)/[^\s<>"'\)\]]+"#,
+    #"https://teams\.microsoft\.com/l/meetup-join/[^\s<>"'\)\]]+"#,
+    #"https://teams\.live\.com/meet/[^\s<>"'\)\]]+"#,
+    #"https://[\w.-]*webex\.com/[^\s<>"'\)\]]+"#,
+    #"https://[\w.-]*(whereby\.com|meet\.jit\.si|chime\.aws|gotomeeting\.com|bluejeans\.com|around\.co)/[^\s<>"'\)\]]+"#,
+]
+
+/// All meeting links in a piece of text, in the order they appear.
+func meetingLinks(in text: String) -> [URL] {
+    var hits: [Range<String.Index>] = []
+    for p in meetingLinkPatterns {
+        var searchStart = text.startIndex
+        while searchStart < text.endIndex,
+              let r = text.range(of: p, options: [.regularExpression, .caseInsensitive], range: searchStart..<text.endIndex) {
+            hits.append(r)
+            searchStart = r.upperBound
         }
     }
-    return nil
+    return hits.sorted { $0.lowerBound < $1.lowerBound }.compactMap {
+        URL(string: String(text[$0]).trimmingCharacters(in: CharacterSet(charactersIn: ".,;:")))
+    }
+}
+
+/// Finds the meeting's real video-call link.
+///
+/// Organizers often paste an old or different link into the description (for example a copied
+/// "Meet: https://meet.google.com/…" line). Google Calendar adds the event's actual conference
+/// link in its own block at the END of the description ("Join with Google Meet: …"), and the
+/// Zoom/Teams add-ins do the same. So that block wins over anything typed by hand.
+func findJoinURL(_ e: EKEvent) -> URL? {
+    let notes = e.notes ?? ""
+
+    // 1. The block Google Calendar / Zoom / Teams generate for the event itself.
+    let markers = ["Join with Google Meet", "Join Google Meet", "Join Zoom Meeting",
+                   "Join the meeting now", "Join on your computer", "Microsoft Teams meeting"]
+    for marker in markers {
+        if let r = notes.range(of: marker, options: [.caseInsensitive, .backwards]),
+           let u = meetingLinks(in: String(notes[r.upperBound...])).first {
+            return u
+        }
+    }
+    if let r = notes.range(of: "-::~:~::~"), let u = meetingLinks(in: String(notes[r.upperBound...])).first {
+        return u
+    }
+
+    // 2. The event's URL field, then its location (where Zoom/Teams links usually go).
+    for text in [e.url?.absoluteString, e.location].compactMap({ $0 }) {
+        if let u = meetingLinks(in: text).first { return u }
+    }
+
+    // 3. Otherwise the LAST link in the description, since generated links are appended at the end.
+    return meetingLinks(in: notes).last
+}
+
+/// Plain-text summary of where a meeting's link came from, for troubleshooting.
+func linkDiagnostics(_ e: EKEvent) -> String {
+    func clip(_ s: String?) -> String {
+        guard let s = s, !s.isEmpty else { return "(empty)" }
+        return s.count > 600 ? String(s.prefix(600)) + "…" : s
+    }
+    let all = meetingLinks(in: [e.url?.absoluteString, e.location, e.notes].compactMap { $0 }.joined(separator: "\n"))
+    return """
+    Meeting: \(e.title ?? "(no title)") at \(timeString(e.startDate))
+    Link MeetingNag will open: \(findJoinURL(e)?.absoluteString ?? "(none found)")
+    All meeting links found: \(all.isEmpty ? "(none)" : all.map(\.absoluteString).joined(separator: ", "))
+
+    URL field: \(clip(e.url?.absoluteString))
+    Location: \(clip(e.location))
+    Notes: \(clip(e.notes))
+    """
 }
 
 final class CalendarWatcher {
@@ -343,14 +394,19 @@ final class CalendarWatcher {
     /// time and link. Returns nil if the meeting was deleted, cancelled or declined.
     func latest(_ m: Meeting) -> Meeting? {
         guard hasAccess, !m.eventID.isEmpty else { return m }
+        guard let ev = event(for: m), ev.status != .canceled else { return nil }
+        if let me = ev.attendees?.first(where: { $0.isCurrentUser }), me.participantStatus == .declined { return nil }
+        return makeMeeting(ev)
+    }
+
+    /// The calendar event behind a meeting (same occurrence of a recurring series), if it still exists.
+    func event(for m: Meeting) -> EKEvent? {
+        guard hasAccess, !m.eventID.isEmpty else { return nil }
         let pred = store.predicateForEvents(withStart: m.occurrence.addingTimeInterval(-24 * 3600),
                                             end: m.occurrence.addingTimeInterval(24 * 3600), calendars: nil)
         let matches = store.events(matching: pred).filter { $0.eventIdentifier == m.eventID }
-        let e = matches.first(where: { $0.occurrenceDate == m.occurrence })
+        return matches.first(where: { $0.occurrenceDate == m.occurrence })
             ?? matches.min(by: { abs($0.startDate.timeIntervalSince(m.start)) < abs($1.startDate.timeIntervalSince(m.start)) })
-        guard let ev = e, ev.status != .canceled else { return nil }
-        if let me = ev.attendees?.first(where: { $0.isCurrentUser }), me.participantStatus == .declined { return nil }
-        return makeMeeting(ev)
     }
 }
 
@@ -434,6 +490,8 @@ final class AlertController: NSObject {
     var onSnooze: ((Meeting) -> Void)?
 
     private(set) var current: Meeting?
+    /// The most recent meeting that was shown, for "Re-fire last alert".
+    private(set) var lastShown: Meeting?
     private var windows: [NSWindow] = []
     private var countdownLabels: [NSTextField] = []
     private var tickTimer: Timer?
@@ -486,6 +544,7 @@ final class AlertController: NSObject {
             m = fresh
         }
         current = m
+        lastShown = m
         shownAt = Date()
         escalated = false
         pushoverReceipt = nil
@@ -692,6 +751,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let menu = NSMenu()
     let nextItem = NSMenuItem(title: "Loading…", action: nil, keyEquivalent: "")
     var pauseItem: NSMenuItem!
+    var refireItem: NSMenuItem!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -808,10 +868,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         nextItem.isEnabled = false
         menu.addItem(nextItem)
         menu.addItem(.separator())
+        refireItem = item("Re-fire last alert", #selector(refireLastAlert))
+        menu.addItem(refireItem)
         menu.addItem(item("Test alert now", #selector(testAlert)))
         pauseItem = item("Pause alerts for 1 hour", #selector(togglePause))
         menu.addItem(pauseItem)
         menu.addItem(.separator())
+        menu.addItem(item("Show meeting link details…", #selector(showLinkDetails)))
         menu.addItem(item("Open acknowledgement log", #selector(openLog)))
         menu.addItem(item("Edit settings…", #selector(openConfig)))
         menu.addItem(item("Reload settings", #selector(reloadConfig)))
@@ -832,6 +895,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         let paused = (pausedUntil ?? .distantPast) > now
         pauseItem.title = paused ? "Resume alerts (paused until \(timeString(pausedUntil!)))" : "Pause alerts for 1 hour"
+        if let last = alerts.lastShown {
+            refireItem.title = "Re-fire last alert (\(last.title))"
+            refireItem.action = #selector(refireLastAlert)
+        } else {
+            refireItem.title = "Re-fire last alert (none yet)"
+            refireItem.action = nil   // greys it out
+        }
+    }
+
+    /// Shows the most recent alert again, with the meeting's current title, time and link.
+    @objc func refireLastAlert() {
+        guard let last = alerts.lastShown else { return }
+        if alerts.current?.key == last.key { return }  // already on screen
+        if !last.eventID.isEmpty && watcher.latest(last) == nil {
+            NSApp.activate(ignoringOtherApps: true)
+            let a = NSAlert()
+            a.messageText = "Can't re-fire this alert"
+            a.informativeText = "“\(last.title)” was cancelled, deleted or declined in your calendar."
+            a.runModal()
+            return
+        }
+        enqueue(last)
+    }
+
+    /// Explains which link the Join button will open and where it was found.
+    @objc func showLinkDetails() {
+        let now = Date()
+        let target = alerts.current ?? alerts.lastShown
+            ?? watcher.meetings(from: now, to: now.addingTimeInterval(24 * 3600), config: config).first { $0.start > now }
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert()
+        guard let m = target, let ev = watcher.event(for: m) else {
+            a.messageText = "No meeting to inspect"
+            a.informativeText = "There's no recent alert or upcoming meeting in the next 24 hours."
+            a.runModal()
+            return
+        }
+        let details = linkDiagnostics(ev)
+        a.messageText = "Meeting link details"
+        a.informativeText = details
+        a.addButton(withTitle: "Copy")
+        a.addButton(withTitle: "Close")
+        if a.runModal() == .alertFirstButtonReturn {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(details, forType: .string)
+        }
     }
 
     @objc func testAlert() {

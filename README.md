@@ -45,7 +45,7 @@ Free · source included · macOS 13+ · Google Calendar via macOS Calendar · ab
    ```
    bash build-pkg.sh
    ```
-   If macOS asks you to install the Command Line Tools, click **Install**, then run the command again. This creates **MeetingNag-1.4.pkg** in the same folder. It works on both Apple silicon and Intel Macs.
+   If macOS asks you to install the Command Line Tools, click **Install**, then run the command again. This creates **MeetingNag-1.5.pkg** in the same folder. It works on both Apple silicon and Intel Macs.
 3. **Install.** Double-click the .pkg. On the **Installation Type** screen you can tick **Lid-closed mode** (it's off by default). The installer replaces any previous MeetingNag, including the older Terminal install, and keeps your settings.
 4. **Allow calendar access and Accessibility** when macOS asks, then click **⏰ › Test alert now**.
 
@@ -108,4 +108,6 @@ Phone escalation only happens if you fill in one of the options below. Otherwise
 
 - The Mac has to be awake and logged in for alerts to fire.
 - When several meetings start at the same time, their alerts show one after another.
-- Meeting links from Google Meet, Zoom, Teams, Webex and some other services are detected automatically and power the **Join meeting** button.
+- Meeting links from Google Meet, Zoom, Teams, Webex and some other services are detected automatically and power the **Join meeting** button. When a description contains a pasted link that differs from the meeting's real one, the link Google Calendar (or the Zoom/Teams add-in) attached to the event wins.
+- **⏰ › Re-fire last alert** shows the most recent alert again, with the meeting's current title, time and link.
+- **⏰ › Show meeting link details…** shows which link the Join button will open and every link found in the event, with a Copy button. Paste it into an issue if a link looks wrong.
